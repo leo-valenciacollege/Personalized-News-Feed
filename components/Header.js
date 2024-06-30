@@ -1,3 +1,3 @@
-export default function Header({ title }) {
-  return <h1 className="title">{title}</h1>
+export default function DynamicHeader({ title, tag: Tag='h1', className }) {
+  return <Tag className={`title ${className}`}>{title}</Tag>;
 }

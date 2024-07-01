@@ -5,6 +5,8 @@ import Footer from '@components/Footer';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
+import { Button, Card } from 'react-bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import { fetchNews } from '../src/api/NewsService';
 
 export default function Home() {
@@ -29,15 +31,28 @@ export default function Home() {
       <main>
         <DynamicHeader title="Business News" tag="h1" className="main-heading" />
         <Row>
-          {news.map((article, index) => (
-            <Col key={index} className="w-100">
-              <h2>{article.title}</h2>
-              <p>{article.description}</p>
-              <a href={article.url} target="_blank" rel="noopener noreferrer">
-                Read more
-              </a>
-            </Col>
-          ))}
+          {news.map((article, index) => 
+            article && (
+              <Col md={4} key={index} className="mb-4">
+                <Card>
+                  {article.urlToImage ? (
+                    <Card.Img variant="top" src={article.urlToImage} alt={article.title} className="img-fluid object-fit-cover" style={{ height: "300px" }} />
+                  ) : (
+                    <Card.Img variant="top" src="https://placehold.co/600x400" alt={article.title} className="img-fluid object-fit-cover" style={{ height: "300px" }} />
+                  )}
+                  
+                  <Card.Body>
+                    <Card.Title>{article.title}</Card.Title>
+                    <Card.Text>{article.author}</Card.Text>
+                    <Card.Text>{article.source.name}</Card.Text>
+                    <Card.Text>{new Date(article.publishedAt).toLocaleDateString()}</Card.Text>
+                    <Card.Text>{article.description}</Card.Text>
+                    <Button variant="primary" href={article.url} target="_blank" rel="noopener noreferrer">Read more</Button>
+                  </Card.Body>
+                </Card>
+              </Col>
+            )
+          )}
         </Row>
       </main>
       <Footer />

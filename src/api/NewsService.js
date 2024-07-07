@@ -1,19 +1,27 @@
-require('dotenv').config({ path: '.env.local' });
-
 const API_KEY = process.env.NEXT_PUBLIC_NEWS_API_KEY;
-const BASE_URL = 'https://newsapi.org/v2';
 
 if (!API_KEY) {
   throw new Error('News API key is missing');
 }
 
-export const fetchNews = async (query) => {
-  const url = `${BASE_URL}/top-headlines?country=us&category=business&apiKey=${API_KEY}`
-  const response = await fetch(url);
+async function fetchNews(params) {
+  const queryParams = new URLSearchParams({
+    ...params,
+    apiKey: API_KEY,
+  }).toString();
+  const url = `https://newsapi.org/v2/everything?${queryParams}`;
 
-  if (!response.ok) {
-    throw new Error('Network response was not ok');
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error('Failed to fetch news');
+    }
+    const data = await response.json();
+    return data.articles;
+  } catch (error) {
+    console.error('Error fetching news:', error);
+    throw error;
   }
+}
 
-  return response.json();
-};
+export default fetchNews;

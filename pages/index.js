@@ -47,7 +47,7 @@ export default function Home() {
                     <Card.Text>{article.source.name}</Card.Text>
                     <Card.Text>{new Date(article.publishedAt).toLocaleDateString()}</Card.Text>
                     <Card.Text>{article.description}</Card.Text>
-                    <Button variant="primary" href={article.url} target="_blank" rel="noopener noreferrer">Read more</Button>
+                    <Button variant="primary" href={article.url} target="_blank" rel="noopener noreferrer">Read More</Button>
                   </Card.Body>
                 </Card>
               </Col>

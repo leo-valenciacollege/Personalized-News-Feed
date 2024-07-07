@@ -1,8 +1,14 @@
-const API_KEY = process.env.REACT_APP_NEWS_API_KEY;
+require('dotenv').config({ path: '.env.local' });
+
+const API_KEY = process.env.NEXT_PUBLIC_NEWS_API_KEY;
 const BASE_URL = 'https://newsapi.org/v2';
 
+if (!API_KEY) {
+  throw new Error('News API key is missing');
+}
+
 export const fetchNews = async (query) => {
-  const url = `https://newsapi.org/v2/top-headlines?country=us&category=business&apiKey=`
+  const url = `${BASE_URL}/top-headlines?country=us&category=business&apiKey=${API_KEY}`
   const response = await fetch(url);
 
   if (!response.ok) {

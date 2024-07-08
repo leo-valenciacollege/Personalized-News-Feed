@@ -8,7 +8,6 @@ import fetchNews from '../src/api/NewsService';
 
 export async function getServerSideProps(){
   try{
-
     const initialNewsResponse = await fetchNews({
       q: "everything",
       pageSize: 20,
@@ -20,7 +19,7 @@ export async function getServerSideProps(){
       }
     }
   } catch (error){
-    log.error('Error in getServerSideProps', error);
+    console.error('Error in getServerSideProps', error);
     return{
       props:{
         initialNews: [],
@@ -44,8 +43,10 @@ const filterArticles = (articles) => {
   return articles
     .filter(article =>
       article &&
+      article.title &&
       article.title !== "[Removed]" &&
       article.description !== "[Removed]" &&
+      article.description &&
       article.urlToImage &&
       article.source
     )
@@ -65,12 +66,18 @@ export default function Home({initialNews}) {
     setError(null); //reset error state
 
     try {
-      const params = {
+      const params = cat
+      ? {
+          category: cat,
+          pageSize: 20,
+          page: page,
+        }
+      : {
         q: search || 'everything',
-        category: cat,
         pageSize: 20,
-        page: page
+        page: page,
       };
+
       const response = await fetchNews(params);
 
       //check if the response has the expected result
@@ -78,7 +85,11 @@ export default function Home({initialNews}) {
         throw new Error('Unexpected API response structure');
       }
 
+      console.log("Unfiltered articles:", response.articles);
+
       const validArticles = filterArticles(response.articles);
+
+      console.log("Filtered articles:", validArticles);
 
       if(validArticles.length === 0){
         setError("No articles found for the selected category");
@@ -94,7 +105,7 @@ export default function Home({initialNews}) {
       setCurrentPage(page);
 
     } catch (error) {
-      log.error('Error loading news:', error);
+      console.log('Error loading news:', error);
       setError(error.message);
     } finally{
       setLoading(false);
@@ -157,7 +168,7 @@ export default function Home({initialNews}) {
                   <option value="health">Health</option>
                   <option value="science">Science</option>
                   <option value="sports">Sports</option>
-                  <option value="Techology">Technology</option>
+                  <option value="techology">Technology</option>
                 </Form.Control>
               </Form.Group>
             </Col>

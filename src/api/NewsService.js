@@ -5,24 +5,37 @@ if (!API_KEY) {
 }
 
 async function fetchNews(params) {
-  const queryParams = new URLSearchParams({
-    ...params,
-    apiKey: API_KEY,
-  }).toString();
-  
+  const { q, category, ...otherParams } = params;
   let url;
-  if (params.category && params.category !== '') {
-    url = `https://newsapi.org/v2/top-headlines?${queryParams}`;
+  let queryParams;
+  
+  if (category && category !== '') {
+    url = 'https://newsapi.org/v2/top-headlines';
+    queryParams = new URLSearchParams({
+      category,
+      country: 'us', // Add this line
+      ...otherParams,
+      apiKey: API_KEY,
+    });
   } else {
-    url = `https://newsapi.org/v2/everything?${queryParams}`;
+    url = 'https://newsapi.org/v2/everything';
+    queryParams = new URLSearchParams({
+      q: q || 'everything',
+      ...otherParams,
+      apiKey: API_KEY,
+    });
   }
 
+  const fullUrl = `${url}?${queryParams.toString()}`;
+  console.log('Fetching news from:', fullUrl);
+
   try {
-    const response = await fetch(url);
+    const response = await fetch(fullUrl);
     if (!response.ok) {
       throw new Error('Failed to fetch news');
     }
     const data = await response.json();
+    console.log('API Response:', data);
 
     //check if the response has the expected result
     if(!data || !data.articles){

@@ -9,7 +9,13 @@ async function fetchNews(params) {
     ...params,
     apiKey: API_KEY,
   }).toString();
-  const url = `https://newsapi.org/v2/everything?${queryParams}`;
+  
+  let url;
+  if (params.category && params.category !== '') {
+    url = `https://newsapi.org/v2/top-headlines?${queryParams}`;
+  } else {
+    url = `https://newsapi.org/v2/everything?${queryParams}`;
+  }
 
   try {
     const response = await fetch(url);
@@ -17,7 +23,14 @@ async function fetchNews(params) {
       throw new Error('Failed to fetch news');
     }
     const data = await response.json();
-    return data.articles;
+
+    //check if the response has the expected result
+    if(!data || !data.articles){
+      throw new Error('Unexpected API response structure');
+    }
+
+    return data;
+
   } catch (error) {
     console.error('Error fetching news:', error);
     throw error;

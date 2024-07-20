@@ -1,27 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import DynamicHeader from '@components/Header';
-import Footer from '@components/Footer'; 
+import Footer from '@components/Footer';
 import { Container, Row, Col, Button, Card, Form } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import fetchNews from '../src/api/NewsService';
+import PersonalizedNews from '../components/PersonalizedNews';
+import { trackArticleClick } from '../services/trackingService';
 
-export async function getServerSideProps(){
-  try{
+export async function getServerSideProps() {
+  try {
     const initialNewsResponse = await fetchNews({
       q: "everything",
       pageSize: 20,
       page: 1
     });
-    return{
-      props:{
+    return {
+      props: {
         initialNews: initialNewsResponse.articles,
       }
     }
-  } catch (error){
+  } catch (error) {
     console.error('Error in getServerSideProps', error);
-    return{
-      props:{
+    return {
+      props: {
         initialNews: [],
         error: error.message
       }
@@ -30,12 +32,12 @@ export async function getServerSideProps(){
 }
 
 const filterArticles = (articles) => {
-  if(!Array.isArray(articles)){
+  if (!Array.isArray(articles)) {
     console.error('Expected articles to be an array, but got:', articles);
     return [];
   }
 
-  if(articles.length === 0){
+  if (articles.length === 0) {
     console.log("Received empty articles array");
     return [];
   }
@@ -50,10 +52,10 @@ const filterArticles = (articles) => {
       article.urlToImage &&
       article.source
     )
-    .slice(0,9);
+    .slice(0, 9);
 };
 
-export default function Home({initialNews}) {
+export default function Home({ initialNews }) {
   const [news, setNews] = useState(filterArticles(initialNews));
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -67,21 +69,21 @@ export default function Home({initialNews}) {
 
     try {
       const params = cat
-      ? {
+        ? {
           category: cat,
           pageSize: 20,
           page: page,
         }
-      : {
-        q: search || 'everything',
-        pageSize: 20,
-        page: page,
-      };
+        : {
+          q: search || 'everything',
+          pageSize: 20,
+          page: page,
+        };
 
       const response = await fetchNews(params);
 
       //check if the response has the expected result
-      if(!response || !response.articles){
+      if (!response || !response.articles) {
         throw new Error('Unexpected API response structure');
       }
 
@@ -91,32 +93,42 @@ export default function Home({initialNews}) {
 
       console.log("Filtered articles:", validArticles);
 
-      if(validArticles.length === 0){
+      if (validArticles.length === 0) {
         setError("No articles found for the selected category");
         setNews([]);
-      }else{
-        if(page === 1){
+      } else {
+        if (page === 1) {
           setNews(validArticles);
-        } else{
+        } else {
           setNews(prevNews => [...prevNews, ...validArticles]);
         }
       }
-      
+
       setCurrentPage(page);
 
     } catch (error) {
       console.log('Error loading news:', error);
       setError(error.message);
-    } finally{
+    } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if(!initialNews.length){
+    if (!initialNews.length) {
       loadNews(1);
     }
   }, []);
+
+  useEffect(() => {
+    document.querySelectorAll('.article-link').forEach(item => {
+      item.addEventListener('click', event => {
+        const articleId = item.getAttribute('data-article-id');
+        const articleCategory = item.getAttribute('data-article-category');
+        trackArticleClick(articleId, articleCategory);
+      });
+    });
+  }, [news]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -179,20 +191,21 @@ export default function Home({initialNews}) {
             </Col>
           </Row>
         </Form>
+        <PersonalizedNews />
         {error && <div className="alert alert-danger">{error}</div>}
-        {!error && news.length === 0 && !loading &&(
+        {!error && news.length === 0 && !loading && (
           <div className="alert alert-info">No news found. Try a different search or category.</div>
         )}
         <Row>
           {news.map((article, index) => (
             <Col md={4} key={index} className="mb-4">
               <Card>
-                <Card.Img 
-                  variant="top" 
-                  src={article.urlToImage || "https://placehold.co/600x400"} 
-                  alt={article.title} 
-                  className="img-fluid object-fit-cover" 
-                  style={{ height: "300px" }} 
+                <Card.Img
+                  variant="top"
+                  src={article.urlToImage || "https://placehold.co/600x400"}
+                  alt={article.title}
+                  className="img-fluid object-fit-cover"
+                  style={{ height: "300px" }}
                 />
                 <Card.Body>
                   <Card.Title>{article.title}</Card.Title>
@@ -200,18 +213,18 @@ export default function Home({initialNews}) {
                   <Card.Text>{article.source.name}</Card.Text>
                   <Card.Text>{new Date(article.publishedAt).toLocaleDateString()}</Card.Text>
                   <Card.Text>{article.description}</Card.Text>
-                  <Button variant="primary" href={article.url} target="_blank" rel="noopener noreferrer">Read More</Button>
+                  <Button variant="primary" href={article.url} target="_blank" rel="noopener noreferrer" className="article-link" data-article-id={article.url} data-article-category={article.category}>Read More</Button>
                 </Card.Body>
               </Card>
             </Col>
           ))}
         </Row>
-        {!error && news.length > 0 &&(
+        {!error && news.length > 0 && (
           <Row className="justify-content-center mt-4 mb-4">
             <Col xs="auto">
-              <Button 
-                variant="primary" 
-                onClick={() => loadNews(currentPage + 1)} 
+              <Button
+                variant="primary"
+                onClick={() => loadNews(currentPage + 1)}
                 disabled={loading}
               >
                 {loading ? "Loading..." : "Load More"}

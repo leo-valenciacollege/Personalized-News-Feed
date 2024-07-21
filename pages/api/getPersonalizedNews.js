@@ -1,22 +1,47 @@
-// pages/api/getPersonalizedNews.js
+import fetchNews from '../../src/api/NewsService';
 
-// Sample data for articles
-const articles = [
-    [{"id":"https://www.macrumors.com/guide/apple-watch-ultra-3-everything-we-know/","category":null},{"id":"https://www.macrumors.com/guide/apple-watch-ultra-3-everything-we-know/","category":null},{"id":"https://www.macrumors.com/guide/apple-watch-ultra-3-everything-we-know/","category":null},{"id":"https://www.macrumors.com/guide/apple-watch-ultra-3-everything-we-know/","category":null},{"id":"https://apnews.com/article/delta-flight-attendant-palestinian-pin-1f8f4bee3dab6d502446ffa44711acc3","category":null},{"id":"https://apnews.com/article/delta-flight-attendant-palestinian-pin-1f8f4bee3dab6d502446ffa44711acc3","category":null},{"id":"https://apnews.com/article/delta-flight-attendant-palestinian-pin-1f8f4bee3dab6d502446ffa44711acc3","category":null}]
-];
-
-export default function handler(req, res) {
+export default async function handler(req, res) {
     if (req.method === 'POST') {
-        // Parse the request body
-        const { viewedArticles } = req.body;
+        const { viewedArticles, categoryPreferences } = req.body;
 
-        // Simulate fetching personalized news based on viewedArticles
-        const personalizedNews = articles.filter(article => 
-            viewedArticles.some(viewed => viewed.id === article.id)
-        );
+        // Get the top 3 preferred categories
+        const topCategories = Object.entries(categoryPreferences)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(entry => entry[0]);
 
-        // Respond with the personalized news
-        res.status(200).json({ articles: personalizedNews });
+        let personalizedNews = [];
+
+        for (const category of topCategories) {
+            const newsResponse = await fetchNews({
+                category: category,
+                pageSize: 5,
+                page: 1
+            });
+
+            const filteredArticles = newsResponse.articles.filter(article => 
+                !viewedArticles.some(viewed => viewed.id === article.url)
+            );
+
+            personalizedNews = [...personalizedNews, ...filteredArticles];
+
+            if (personalizedNews.length >= 6) break;
+        }
+
+        // If there is not enough articles, fetch some general news
+        if (personalizedNews.length < 6) {
+            const generalNews = await fetchNews({
+                q: 'general',
+                pageSize: 9 - personalizedNews.length,
+                page: 1
+            });
+
+            personalizedNews = [...personalizedNews, ...generalNews.articles.filter(article => 
+                !viewedArticles.some(viewed => viewed.id === article.url)
+            )];
+        }
+
+        res.status(200).json({ articles: personalizedNews.slice(0, 6) });
     } else {
         res.setHeader('Allow', ['POST']);
         res.status(405).end(`Method ${req.method} Not Allowed`);

@@ -122,13 +122,14 @@ export default function Home({ initialNews }) {
 
   useEffect(() => {
     document.querySelectorAll('.article-link').forEach(item => {
-      item.addEventListener('click', event => {
-        const articleId = item.getAttribute('data-article-id');
-        const articleCategory = item.getAttribute('data-article-category');
-        trackArticleClick(articleId, articleCategory);
-      });
+        item.addEventListener('click', event => {
+            const articleId = item.getAttribute('data-article-id');
+            const articleCategory = item.getAttribute('data-article-category');
+            const articleTitle = item.getAttribute('data-article-title');
+            trackArticleClick(articleId, articleCategory, articleTitle);
+        });
     });
-  }, [news]);
+}, [news]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -153,7 +154,11 @@ export default function Home({ initialNews }) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main>
-        <DynamicHeader title="Your Personal Newsstand" tag="h1" className="main-heading" />
+        <DynamicHeader 
+          title="Your Personal Newsstand" 
+          tag="h1" 
+          className="main-heading" 
+        />
         <Form onSubmit={handleSearch} className="mb-4">
           <Row>
             <Col md={6}>
@@ -213,7 +218,18 @@ export default function Home({ initialNews }) {
                   <Card.Text>{article.source.name}</Card.Text>
                   <Card.Text>{new Date(article.publishedAt).toLocaleDateString()}</Card.Text>
                   <Card.Text>{article.description}</Card.Text>
-                  <Button variant="primary" href={article.url} target="_blank" rel="noopener noreferrer" className="article-link" data-article-id={article.url} data-article-category={article.category}>Read More</Button>
+                  <Button 
+                      variant="primary" 
+                      href={article.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="article-link" 
+                      data-article-id={article.url} 
+                      data-article-category={article.category || 'general'}
+                      data-article-title={article.title}
+                  >
+                      Read More
+                  </Button>
                 </Card.Body>
               </Card>
             </Col>

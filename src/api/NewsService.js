@@ -27,7 +27,6 @@ async function fetchNews(params) {
   }
 
   const fullUrl = `${url}?${queryParams.toString()}`;
-  console.log('Fetching news from:', fullUrl);
 
   try {
     const response = await fetch(fullUrl);

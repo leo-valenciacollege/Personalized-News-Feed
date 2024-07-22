@@ -4,15 +4,17 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
         const { viewedArticles, categoryPreferences } = req.body;
 
-        // Get the top 3 preferred categories
-        const topCategories = Object.entries(categoryPreferences)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3)
-            .map(entry => entry[0]);
+        // Check if the user has viewed any articles
+        if (!viewedArticles || viewedArticles.length === 0) {
+            return res.status(200).json({ articles: [] });
+        }
+
+        // Get the categories of viewed articles
+        const viewedCategories = [...new Set(viewedArticles.map(article => article.category))];
 
         let personalizedNews = [];
 
-        for (const category of topCategories) {
+        for (const category of viewedCategories) {
             const newsResponse = await fetchNews({
                 category: category,
                 pageSize: 5,
@@ -28,11 +30,11 @@ export default async function handler(req, res) {
             if (personalizedNews.length >= 6) break;
         }
 
-        // If there is not enough articles, fetch some general news
+        // If we don't have enough articles, fetch some general news
         if (personalizedNews.length < 6) {
             const generalNews = await fetchNews({
                 q: 'general',
-                pageSize: 9 - personalizedNews.length,
+                pageSize: 6 - personalizedNews.length,
                 page: 1
             });
 
@@ -41,7 +43,10 @@ export default async function handler(req, res) {
             )];
         }
 
-        res.status(200).json({ articles: personalizedNews.slice(0, 6) });
+        // Limit to 6 articles
+        personalizedNews = personalizedNews.slice(0, 6);
+
+        res.status(200).json({ articles: personalizedNews });
     } else {
         res.setHeader('Allow', ['POST']);
         res.status(405).end(`Method ${req.method} Not Allowed`);

@@ -13,7 +13,7 @@ async function fetchNews(params) {
     url = 'https://newsapi.org/v2/top-headlines';
     queryParams = new URLSearchParams({
       category,
-      country: 'us', // Add this line
+      country: 'us',
       ...otherParams,
       apiKey: API_KEY,
     });

@@ -89,7 +89,10 @@ export default function Home({ initialNews }) {
 
       console.log("Unfiltered articles:", response.articles);
 
-      const validArticles = filterArticles(response.articles);
+      const validArticles = filterArticles(response.articles).map(article => ({
+        ...article,
+        category: cat || 'general' // Ensure category is set
+      }));
 
       console.log("Filtered articles:", validArticles);
 
@@ -116,16 +119,23 @@ export default function Home({ initialNews }) {
 
   useEffect(() => {
     if (!initialNews.length) {
-      loadNews(1);
+      loadNews(1, '', 'general'); // Set a default category
+    } else {
+      setNews(filterArticles(initialNews).map(article => ({
+        ...article,
+        category: 'general' // Set a default category for initial news
+      })));
     }
   }, []);
 
   useEffect(() => {
+    console.log('Current news articles:', news);
     document.querySelectorAll('.article-link').forEach(item => {
         item.addEventListener('click', event => {
             const articleId = item.getAttribute('data-article-id');
             const articleCategory = item.getAttribute('data-article-category');
             const articleTitle = item.getAttribute('data-article-title');
+            console.log('Clicked article:', { articleId, articleCategory, articleTitle })
             trackArticleClick(articleId, articleCategory, articleTitle);
         });
     });
